@@ -1,0 +1,149 @@
+
+-------- vi --------------
+v		vim visual mode, can select multiple line
+:set paste	vi paste mode on, prevents indenting issues
+:set nopaste	vim paste mode off
+3dd		vim delete three lines starting with current, put in buffer
+3yy		vim copy three lines starting with current, put in buffer
+
+----- tmux --------------
+tmux action stroke is <ctrl-b>, will abbreviate as cb
+tmux new -A -s user		create or attach to session named user <ctrl-B, d> to detach
+cb, d			tmux, to detach
+cb, "			tmux, split into horiz panes
+cb, %			tmux, split into vert panes
+cb, arrow up or down	tmux, move between panes
+
+--------------------- find -------------------------
+find * | grep searchstring										finding a file or directory in any subdirectories from current location
+find * | grep smpm.*cst											this is how to use wildcards.  Also:   find * | 'grep smpm.*cst'	
+fd {filename} .													finding a file in any subdirectories from current location. Can use {path} instead of .
+find . -type f -name '*.m' -exec ls -lh \{\} \;					find all .m files in an subdirectories  (the -exec part gives more details information)
+find . -name '*.m' | xargs grep xxx								look for the string "xxx" in all .m files in the current directory structure (recursive)
+find . -name '*.dds' -exec grep xxx /dev/null \{\} \;	
+find {path} -type f -mtime -1 									find all files modified within the last day.  You can use . for the local directory instead of {path}
+find {path} -type f -newermt 2023-02-01                         find all files modified since this date.  You can use . for the local directory instead of {path}
+find . -type f -name "*.mp3" -exec cp {} /dest/folder \; 		
+find {path} -type f -newermt 2023-02-01  -exec cp -p {} /dest/folder \;  find files and copy to /dest/folder, preserving timestamp (use sudo under WSL for network drives)
+pushd /mnt/u/work/project; sudo find . -type f -newermt 2023-08-04 -exec cp -p --parents {} /mnt/h/burn/to_inside \; ; popd     same as above, but preserve folder structure. 
+-path '*/.snapshot' -prune -o								   	ignore directories matching this wildcard
+find ~ -path '*/.snapshot' -prune -o -type f -mtime -1			find all files in my home directory, ignoring the .snapshot directory
+fd . {path} --changed-within 1d									find all files modified within the last day.  You can leave out {path} for local directory
+find . -name '*.dds' -exec grep what /dev/null \{\} \;
+find . -not -name '*.xlsx' -not -name '*.xls'					find all files without these suffixes
+find . -type f -name "~*"										find all files starting with ~
+find ~ -type d -exec chmod 755 \{\} \;							change all of my directories to this permission
+find ~ -type f -exec chmod 644 \{\} \;							change all of my files to this permission
+find . -type f -maxdepth 1 | fgrep -v makefile | xargs rm		find and remove all files except for those containing makefile in the name
+find . -type f -name '*.m3d' -delete							find and delete all files ending with this (handles files with spaces)
+find . -type d													find all directories
+find . -type d  | perl -pi -e 's/\//\\\\/g' | perl -pi -e 's/\n$/\\\\*.m\n/' *.m&		find it at the end of the name
+find . -name '*.m' -exec ls -l --full-time {} \; | awk '{$1=$2=$3=$4=$5=$7=$8="";sub("    ","")}1' | awk '{gsub(/-/,"",$1);print}' | sort				find files with suffix in the dir structure, sort by modify date
+find . -type f -exec ls -l --time-style=full-iso {} \; | awk '{print $6,$NF}' | awk '{gsub(/-/,"",$1);print}' | awk '$1>= 20120201 && $1<= 20120229 {print $1, $2}' | sort         find between these times
+find /mnt/u/work/calc_sheets -type f -exec ls -l --full-time {} \; | awk '{$1=$2=$3=$4=$5=$7=$8="";sub("    ","")}1' | awk '{gsub(/-/,"",$1);print}' | awk '$1>= 20170201 && $1<= 20220229 {print $1, $2}' | sort         find between these times
+find . -type f -newermt 2017-02-01 ! -newermt 2022-02-29 | awk '{$1=$2=$3=$4=$5=$7=$8="";sub("    ","")}1' | sort		find between these times, no detailed file info			
+find . -type f -mtime -33 -a -mtime +21 -printf "%t\t%p\n"							find file modified between 21 and 33 days ago, print with detailed info about modification time
+locate -d ~/.u.db "$PWD*/*.m"									use locate to find all .m files from current location
+updatedb -l 0 -o ~/.u.db -U /mnt/u								update the locate database named .u.db with the contents of /mnt/u
+locate -d ~/.u.db "$PWD*/*.m" | xargs -d "\n" ls -l				use locate and give detailed information, need to use xargs -d "\n" to handle files with spaces
+
+--------------------- awk,sed,cut -------------------------
+awk '{print $1}'									print the first item in a space-delimited string, with newline
+awk '{print $1,$2}'									print the first and second item in a space-delimited string, with newline
+awk '{printf "%s", $1}'								print the first item in a space-delimited string, without newline
+sed -i 's/ugly/beautiful/g' a.txt		replace all occurances in the file
+echo "somestring1234" | cut -c 3-						remove 2 characters from the beginning
+echo "somestring1234" | rev | cut -c 3- | rev			remove 2 characters from the end
+
+--------------------- grep -------------------------
+grep {string} filename											look for 'term' in a single file
+grep -nr {string} *												look recursively in files and list name/line of occurence (but not files in current directory)
+grep -nr {string} .												look recursively in files and list name/line of occurence (including files in current directory)
+grep -r --include '*.m' xxx .									look for the string "xxx" in all .m files in the current directory structure (recursive)
+grep -r --exclude '*.m' xxx .									look for the string "xxx" in all files except .m files (recursive)
+grep -v 'ADS\|hpeesof\|Found\|winfiles\|spanish\|Searching' *   searching for things that don't contain these items
+rm `ll | grep 2000 | cut -c 57-`								remove all files created in 2000
+grep -n '\.m$' *												using \ for escape, must use ' ' around the expression
+grep -i															case insensitive
+
+--------------------- bash  -------------------------
+declare -F				show all function names declared in the shell
+declare -f				show all function contents declared in the shell
+declare -f function1	show function contents for function1
+chase {filename}		change the file name to all lower case
+chase */*/*				change all filenames in current & sub-directories
+ctrl-r 					search history
+ctrl-w 					erase word
+ctrl-u 					erase from here to beginning of the line 
+ctrl-a 					move the cursor to the beginning of the line
+ctrl-e 					move the curor to the end of the line
+
+--------------------- getting info -------------------------
+less +G filename						displays the file in less, but starting at the bottom.  when using less you can type G to go to the bottom (same as vim)
+tac										cat the file, but backwards
+id										uid's for all people
+du -h -d 1 | sort -h					current directory sizes in human readable format
+ncdu									easier to read.
+dust									graphical output of many levels deep, very fast
+df -h									checking disk capacity,usage, mount point
+touch -c -t 202303162046 filename		change modification date to March 16, 2023.  time = 20:46 (might need sudo)
+date +"%F"
+pstree -apl								check process trees
+pstree -apl `pidof cron`				check things that are running as cron
+ps -elf									to show processes
+kill -15 {pid}							to kill a process with a chance for it to cleanup firce
+kill -9 {pid}							to kill a process forcefully
+cat /proc/meminfo
+cat /proc/cpuinfo
+uname -a								os info about the workstation
+sudo run-parts /etc/update-motd.d/		run message of the day
+sort {filename}							sorts the file alphabetically
+uniq {filename}							displays the unique lines of the file
+python3 -m http.server 					shares the current directory (on remote browser using http://ip:8080)
+pushd /mnt/u/work; python3 -m http.server 8080; popd		go into a directory, do something, come back to original directory
+source !$								source the file that you just edited with the last command, !$ takes the last argument of the previous command
+ls -al *.mat | cut -c 57- > files.txt		save a listing of all .mat files into a text file
+od -x -N10 {filename}					listing first 10 bytes of a binary file (octal dump)
+xxd -l 100 -c 12 -p {filename} 			listing a binary file, without line numbers, first 100 bytes, 12 bytes per line
+xxd -l 100 -c 32 {filename)				show the ASCII equivalent
+env | sort > out.txt 2>&1				dump results, have STDERR and STDOUT go to file
+chsh -s /bin/bash						change default shell
+ypchsh 									change default shell
+yppasswd user							change password
+man ls | col -b > out.txt				piping the man command to a text file
+ypcat hosts | grep msoe					to find the ip address
+stty erase <backspace><cr>				ftp backspace fix
+bunzip2 {file.bz2}						unzip
+time cp {filename}						how long to execute the copy command
+dos {filename}							remove <cr> if present, adds <cr> if not present
+diff									compare two files, terminal mode
+rsync -a --delete --exclude='*.ds' matlab /scratch	archive the matlab directory into /scratch directory (deleting things in the archive that have been deleted in the original)
+--------------------- network probing -------------------------
+ip -a
+ifconfig eth0 169.254.185.150
+nmap -sP anand/24 						find computers on the same subnet as anand
+nmap -sP 173.23.140.1-255				check for all computers on this subnet
+nmap -p 22 anand/24						scan for port 22 on this subnet
+mtr google.com                          better than traceroute
+lft google.com                          better than traceroute
+--------------------- tar -------------------------
+tar -cvf {filename.tar} {dir}			to create tar file
+tar xf {filename.tar}					to unpack
+tar xvfz {filename.tar.Z}				to uncompress and unpack
+tar -zxf {filename.tar.gz}				to unpack
+tar -jxf {filename.tar.bz2}				to unpack
+--------------------- rsync -------------------------
+rsync -avm  --include '*.xls*' --include '*.pptx' --include '*.vsd*' -f 'hide,! */' '/mnt/p/src/' /mnt/u/dst/		% copy just files (recursively) with these suffixes (no delete in this command), m removes empty directories
+
+--------------------- copy all filetypes in a directory -------------------------
+cd /home/user;find . \( -path ./.snapshot -o -path */inside \) -prune -o -name '*.m'  -exec cp -pax --parents \{\} /home/user/misc/transfer_out/inside/mat/ \;		find all .m files and copy with directory structure
+cd /home/user;find . \( -path ./.snapshot -o -path */inside \) -prune -o -name '*.xls*'  -exec cp -pax --parents \{\} /home/user/misc/transfer_out/inside/excel/ \;		find all .xls files and copy with directory structure
+cd /home/user;find . \( -path ./.snapshot -o -path */inside \) -prune -o -name '*.py'  -exec cp -pax --parents \{\} /home/user/misc/transfer_out/inside/py/ \;		find all .py files and copy with directory structure
+
+-------- Putty pscp -------------
+cd c:\Files\Plink
+pscp root@169.254.185.150:/usr/loca/local/bin/* u:\work\
+
+vncserver :67 -geometry 1920x1020
+vncserver -kill :67
+lmstat -f MATLAB -c 1730@flex1			check MATLAB licenses

@@ -5,6 +5,8 @@ v		vim visual mode, can select multiple line
 :set nopaste	vim paste mode off
 3dd		vim delete three lines starting with current, put in buffer
 3yy		vim copy three lines starting with current, put in buffer
+G  goto last line
+:1 goto first line
 
 ----- tmux --------------
 tmux action stroke is <ctrl-b>, will abbreviate as cb
